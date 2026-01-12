@@ -1,28 +1,12 @@
 import Link from 'next/link';
 import { BookOpen, GraduationCap, Lock, CheckCircle } from 'lucide-react';
+import Navbar from '@/components/layout/Navbar';
 
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-blue-50">
-      {/* Header */}
-      <header className="border-b bg-white">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <BookOpen className="h-8 w-8 text-blue-600" />
-              <span className="text-2xl font-bold text-slate-800">WriteMaster<span className="text-blue-600">RW</span></span>
-            </div>
-            <nav className="hidden md:flex space-x-6">
-              <Link href="#features" className="text-slate-600 hover:text-blue-600">Features</Link>
-              <Link href="#how-it-works" className="text-slate-600 hover:text-blue-600">How It Works</Link>
-              <Link href="#modes" className="text-slate-600 hover:text-blue-600">Writing Modes</Link>
-            </nav>
-            <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
-              Get Started
-            </button>
-          </div>
-        </div>
-      </header>
+      <Navbar />
+    
 
       {/* Hero Section */}
       <main className="container mx-auto px-4 py-12">
