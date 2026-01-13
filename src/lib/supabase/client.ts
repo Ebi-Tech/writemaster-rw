@@ -8,5 +8,25 @@ export function createClient() {
     throw new Error('Missing Supabase environment variables')
   }
   
-  return createBrowserClient(supabaseUrl, supabaseKey)
+  const client = createBrowserClient(supabaseUrl, supabaseKey)
+  
+  // Add edge function helper
+  client.functions.invoke = async (functionName: string, options?: any) => {
+    const response = await fetch(`${supabaseUrl}/functions/v1/${functionName}`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${supabaseKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(options?.body || {}),
+    })
+    
+    if (!response.ok) {
+      throw new Error(`Function ${functionName} failed: ${response.statusText}`)
+    }
+    
+    return response.json()
+  }
+  
+  return client
 }

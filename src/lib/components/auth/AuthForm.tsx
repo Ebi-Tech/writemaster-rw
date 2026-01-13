@@ -35,7 +35,7 @@ export default function AuthForm({ initialMode = 'login' }: { initialMode?: Auth
 
     try {
       if (mode === 'signup') {
-        // Sign up
+        // Sign up AND sign in immediately (auto-confirm)
         const { data: authData, error: authError } = await supabase.auth.signUp({
           email,
           password,
@@ -44,30 +44,52 @@ export default function AuthForm({ initialMode = 'login' }: { initialMode?: Auth
               full_name: fullName,
               school_name: schoolName,
               ...detectInstitution(email)
-            }
+            },
+            // Auto-confirm for development
+            emailRedirectTo: `${window.location.origin}/auth/callback`
           }
         })
 
         if (authError) throw authError
 
         if (authData.user) {
+          // Immediately sign in after signup
+          const { error: signInError } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+          })
+
+          if (signInError) throw signInError
+          
           // Update user profile with additional info
           const { error: profileError } = await supabase
             .from('users')
             .update({
               full_name: fullName,
               school_name: schoolName,
-              institution_domain: detectInstitution(email).domain
+              institution_domain: detectInstitution(email).domain,
+              updated_at: new Date().toISOString()
             })
             .eq('id', authData.user.id)
 
-          if (profileError) console.error('Profile update error:', profileError)
+          if (profileError) {
+            console.error('Profile update error:', profileError)
+            // Create profile if it doesn't exist
+            await supabase
+              .from('users')
+              .insert({
+                id: authData.user.id,
+                email: authData.user.email!,
+                full_name: fullName,
+                school_name: schoolName,
+                role: detectInstitution(email).isInstitution ? 'institution' : 'student',
+                institution_domain: detectInstitution(email).domain
+              })
+          }
           
-          setSuccess('Account created successfully! Please check your email to confirm your account.')
-          // Auto-login after successful signup
-          setTimeout(() => {
-            router.push('/dashboard')
-          }, 2000)
+          // Redirect to dashboard immediately
+          router.push('/dashboard')
+          router.refresh()
         }
       } else {
         // Log in
@@ -216,7 +238,7 @@ export default function AuthForm({ initialMode = 'login' }: { initialMode?: Auth
           ) : mode === 'login' ? (
             'Sign In'
           ) : (
-            'Create Account'
+            'Create Account & Sign In'
           )}
         </button>
 
@@ -235,7 +257,7 @@ export default function AuthForm({ initialMode = 'login' }: { initialMode?: Auth
         {mode === 'signup' && (
           <div className="text-center">
             <p className="text-xs text-gray-500 mt-4">
-              By signing up, you agree to our Terms of Service and Privacy Policy.
+              By signing up, you'll be logged in immediately. No email confirmation required for now.
             </p>
           </div>
         )}

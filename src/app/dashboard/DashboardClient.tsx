@@ -1,9 +1,10 @@
 'use client'
 
 import { useAuth } from '@/providers/AuthProvider'
-import { BookOpen, FileText, TrendingUp, Clock, Plus, ArrowRight } from 'lucide-react'
+import { BookOpen, FileText, TrendingUp, Clock, Plus, ArrowRight, User } from 'lucide-react'
 import Link from 'next/link'
 import { useState } from 'react'
+import type { Session } from '@supabase/supabase-js'
 
 type Project = {
   id: string
@@ -15,23 +16,14 @@ type Project = {
   last_modified: string
 }
 
-type UserProfile = {
-  id: string
-  email: string
-  full_name: string | null
-  role: string
-  school_name: string | null
-  total_essays_completed: number
-  total_theses_completed: number
-  average_score: number
-}
-
 export default function DashboardClient({ 
   userProfile, 
-  initialProjects 
+  initialProjects,
+  session 
 }: { 
-  userProfile: UserProfile
+  userProfile: any
   initialProjects: Project[]
+  session: Session
 }) {
   const { signOut } = useAuth()
   const [projects] = useState<Project[]>(initialProjects)
@@ -49,6 +41,24 @@ export default function DashboardClient({
     return mode === 'essay' ? '📝' : '🎓'
   }
 
+  // Safe user display name
+  const getUserDisplayName = () => {
+    if (!userProfile) {
+      return session.user.email?.split('@')[0] || 'User'
+    }
+    return userProfile.full_name || userProfile.email?.split('@')[0] || 'User'
+  }
+
+  // Safe user stats
+  const userStats = {
+    totalEssays: userProfile?.total_essays_completed || 0,
+    totalTheses: userProfile?.total_theses_completed || 0,
+    averageScore: userProfile?.average_score || 0,
+    email: session.user.email || 'No email',
+    role: userProfile?.role || 'student',
+    schoolName: userProfile?.school_name || null
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -62,7 +72,7 @@ export default function DashboardClient({
               <div>
                 <h1 className="text-xl font-bold text-gray-900">Dashboard</h1>
                 <p className="text-sm text-gray-600">
-                  Welcome back, {userProfile.full_name || userProfile.email.split('@')[0]}!
+                  Welcome back, {getUserDisplayName()}!
                 </p>
               </div>
             </div>
@@ -83,7 +93,7 @@ export default function DashboardClient({
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600">Total Essays</p>
-                <p className="text-3xl font-bold text-gray-900">{userProfile.total_essays_completed}</p>
+                <p className="text-3xl font-bold text-gray-900">{userStats.totalEssays}</p>
               </div>
               <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
                 <FileText className="h-6 w-6 text-blue-600" />
@@ -95,7 +105,7 @@ export default function DashboardClient({
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600">Total Theses</p>
-                <p className="text-3xl font-bold text-gray-900">{userProfile.total_theses_completed}</p>
+                <p className="text-3xl font-bold text-gray-900">{userStats.totalTheses}</p>
               </div>
               <div className="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center">
                 <BookOpen className="h-6 w-6 text-emerald-600" />
@@ -108,7 +118,7 @@ export default function DashboardClient({
               <div>
                 <p className="text-sm text-gray-600">Average Score</p>
                 <p className="text-3xl font-bold text-gray-900">
-                  {userProfile.average_score ? userProfile.average_score.toFixed(1) : '0.0'}/10
+                  {userStats.averageScore ? userStats.averageScore.toFixed(1) : '0.0'}/10
                 </p>
               </div>
               <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
@@ -266,22 +276,22 @@ export default function DashboardClient({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <p className="text-sm text-gray-600">Email</p>
-              <p className="font-medium">{userProfile.email}</p>
+              <p className="font-medium">{userStats.email}</p>
             </div>
             <div>
               <p className="text-sm text-gray-600">Role</p>
-              <p className="font-medium capitalize">{userProfile.role}</p>
+              <p className="font-medium capitalize">{userStats.role}</p>
             </div>
-            {userProfile.school_name && (
+            {userStats.schoolName && (
               <div>
                 <p className="text-sm text-gray-600">School/Institution</p>
-                <p className="font-medium">{userProfile.school_name}</p>
+                <p className="font-medium">{userStats.schoolName}</p>
               </div>
             )}
             <div>
               <p className="text-sm text-gray-600">Account Type</p>
               <p className="font-medium">
-                {userProfile.email.includes('@ur.ac.rw') || userProfile.email.includes('@ac.rw')
+                {userStats.email.includes('@ur.ac.rw') || userStats.email.includes('@ac.rw')
                   ? 'Institution Account'
                   : 'Student Account'}
               </p>
