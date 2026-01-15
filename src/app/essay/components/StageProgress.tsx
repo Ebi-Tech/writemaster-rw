@@ -1,6 +1,6 @@
 'use client'
 
-import { CheckCircle, Lock, Circle } from 'lucide-react'
+import { CheckCircle, Lock, Circle, Edit } from 'lucide-react'
 
 type Stage = {
   id: string
@@ -59,6 +59,8 @@ export default function StageProgress({
                 <div className="mr-3 mt-1">
                   {status?.isCompleted ? (
                     <CheckCircle className="h-5 w-5 text-green-500" />
+                  ) : isCurrent ? (
+                    <Edit className="h-5 w-5 text-blue-500" />
                   ) : isAccessible ? (
                     <Circle className="h-5 w-5 text-gray-300" />
                   ) : (
@@ -80,11 +82,13 @@ export default function StageProgress({
                   
                   <p className="text-sm text-gray-600 mb-2">{stage.description}</p>
                   
-                  <div className="flex items-center text-xs text-gray-500">
+                  <div className="flex items-center text-xs">
                     {status?.isCompleted ? (
                       <span className="text-green-600 font-medium">✓ Completed</span>
+                    ) : isCurrent ? (
+                      <span className="text-blue-600 font-medium">Current</span>
                     ) : isAccessible ? (
-                      <span className="text-blue-600 font-medium">Ready to start</span>
+                      <span className="text-gray-600">Ready to start</span>
                     ) : (
                       <span className="text-gray-500">Locked</span>
                     )}

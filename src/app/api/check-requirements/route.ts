@@ -2,9 +2,22 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(request: NextRequest) {
   try {
-    const { projectId, stageId, content, requirements } = await request.json()
+    const { 
+      projectId, 
+      stageId, 
+      content, 
+      requirements,
+      wordLimit,
+      currentStageIndex,
+      isLastStage
+    } = await request.json()
 
-    console.log('🔍 Checking requirements:', { projectId, stageId })
+    console.log('🔍 Checking requirements:', { 
+      projectId, 
+      stageId, 
+      wordLimit,
+      isLastStage 
+    })
 
     if (!content || typeof content !== 'string') {
       return NextResponse.json(
@@ -22,7 +35,16 @@ export async function POST(request: NextRequest) {
     
     console.log(`📊 Word count: ${wordCount}, Character count: ${characterCount}`)
 
-    // Check requirements if provided
+    // Check word limit if provided
+    if (wordLimit && wordCount > wordLimit) {
+      failedRequirements.push('word_limit')
+      feedbackItems.push(`Exceeds word limit: ${wordCount} > ${wordLimit}`)
+    } else if (wordLimit) {
+      passedRequirements.push('word_limit')
+      feedbackItems.push(`Within word limit: ${wordCount}/${wordLimit}`)
+    }
+
+    // Check stage-specific requirements
     if (requirements && Array.isArray(requirements)) {
       requirements.forEach((req: any) => {
         let passed = false
@@ -59,14 +81,14 @@ export async function POST(request: NextRequest) {
               }
             } else {
               feedback = 'No keywords specified to check'
-              passed = true // Don't fail if no keywords specified
+              passed = true
             }
             break
           }
           
           default: {
             feedback = `Unknown requirement type: ${req.type}`
-            passed = true // Don't fail on unknown types
+            passed = true
           }
         }
         
@@ -80,27 +102,20 @@ export async function POST(request: NextRequest) {
         
         feedbackItems.push(`${req.description}: ${feedback}`)
       })
-    } else {
-      console.log('⚠️ No requirements specified, using default checks')
-      
-      // Default basic checks
-      if (wordCount < 10) {
-        failedRequirements.push('min_length')
-        feedbackItems.push('Content too short. Try to write at least 10 words.')
-      } else {
-        passedRequirements.push('min_length')
-        feedbackItems.push(`Good start with ${wordCount} words.`)
-      }
     }
 
-    // Generate overall feedback
+    // Special handling for last stage
     let overallFeedback = ''
     const totalRequirements = passedRequirements.length + failedRequirements.length
     
-    if (totalRequirements === 0) {
-      overallFeedback = 'No specific requirements to check. Your content looks good!'
+    if (isLastStage) {
+      if (failedRequirements.length === 0) {
+        overallFeedback = '🎊 Excellent! Your essay is complete and meets all requirements. Congratulations!'
+      } else {
+        overallFeedback = 'Almost there! Complete the final requirements to finish your essay.'
+      }
     } else if (failedRequirements.length === 0) {
-      overallFeedback = '🎉 Excellent! All requirements met. You can proceed to the next stage.'
+      overallFeedback = '🎉 All requirements met! You can proceed to the next stage.'
     } else if (passedRequirements.length === 0) {
       overallFeedback = 'Try adding more content and ensure you address all requirements.'
     } else {
@@ -118,6 +133,7 @@ export async function POST(request: NextRequest) {
       detailedFeedback: feedbackItems,
       wordCount,
       characterCount,
+      isLastStageCompleted: isLastStage && failedRequirements.length === 0,
       timestamp: new Date().toISOString()
     })
 
@@ -140,7 +156,6 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Add OPTIONS handler for CORS
 export async function OPTIONS() {
   return new NextResponse(null, {
     status: 200,

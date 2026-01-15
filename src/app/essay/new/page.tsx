@@ -51,34 +51,35 @@ export default function NewEssayPage() {
 
       if (projectError) throw projectError
 
-      // Create the first stage
-      const { error: stageError } = await supabase
-        .from('stage_progress')
-        .insert({
-          project_id: project.id,
-          stage_id: 'thesis_statement',
-          stage_type: 'essay',
-          title: 'Thesis Statement',
-          status: 'unlocked',
-          is_unlocked: true,
-          requirements: [
-            {
-              id: 'thesis_length',
-              type: 'word_count',
-              minValue: 15,
-              maxValue: 40,
-              description: 'Thesis should be 15-40 words',
-              errorMessage: 'Thesis is too short or too long'
-            },
-            {
-              id: 'thesis_arguable',
-              type: 'contains_keywords',
-              requiredKeywords: ['argu', 'position', 'claim', 'assert', 'because', 'therefore'],
-              description: 'Thesis must take a clear position',
-              errorMessage: 'Your thesis needs to make a clear, arguable claim'
-            }
-          ]
-        })
+      // In the handleCreateEssay function, replace the stage creation code:
+
+// Create the first stage (plan_thesis)
+const { error: stageError } = await supabase
+  .from('stage_progress')
+  .insert({
+    project_id: project.id,
+    stage_id: 'plan_thesis',
+    stage_type: 'essay',
+    title: 'Plan & Thesis Draft',
+    status: 'unlocked',
+    is_unlocked: true,
+    requirements: [
+      {
+        id: 'outline_points',
+        type: 'word_count',
+        minValue: 30,
+        description: 'Outline should have at least 3 main points',
+        errorMessage: 'Your outline needs more detail (minimum 30 words)'
+      },
+      {
+        id: 'thesis_draft',
+        type: 'contains_keywords',
+        requiredKeywords: ['argu', 'position', 'claim', 'because', 'therefore'],
+        description: 'Thesis draft should take a clear position',
+        errorMessage: 'Your thesis needs to make a clear, arguable claim'
+      }
+    ]
+  })
 
       if (stageError) throw stageError
 
